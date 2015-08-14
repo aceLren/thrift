@@ -17,39 +17,41 @@
 -- under the License.
 --
 
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP                       #-}
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE OverloadedStrings         #-}
+{-# LANGUAGE ScopedTypeVariables       #-}
+{-# LANGUAGE TupleSections             #-}
 
 module Thrift.Protocol.JSON
     ( module Thrift.Protocol
     , JSONProtocol(..)
+    , build
     ) where
 
-import Control.Applicative
-import Control.Monad
-import Data.Attoparsec.ByteString as P
-import Data.Attoparsec.ByteString.Char8 as PC
-import Data.Attoparsec.ByteString.Lazy as LP
-import Data.ByteString.Lazy.Builder as B
-import Data.ByteString.Internal (c2w, w2c)
-import Data.Functor
-import Data.Int
-import Data.List
-import Data.Maybe (catMaybes)
-import Data.Monoid
-import Data.Text.Lazy.Encoding
-import Data.Word
-import qualified Data.HashMap.Strict as Map
+import           Control.Applicative
+import           Control.Monad
+import           Data.Attoparsec.ByteString       as P
+import           Data.Attoparsec.ByteString.Char8 as PC
+import           Data.Attoparsec.ByteString.Lazy  as LP
+import           Data.ByteString.Internal         (c2w, w2c)
+import           Data.ByteString.Lazy.Builder     as B
+import           Data.Functor
+import qualified Data.HashMap.Strict              as Map
+import           Data.Int
+import           Data.List
+import           Data.Maybe                       (catMaybes)
+import           Data.Monoid
+import           Data.Text.Lazy                   (Text)
+import           Data.Text.Lazy.Encoding
+import           Data.Word
 
-import Thrift.Protocol
-import Thrift.Transport
-import Thrift.Types
+import           Thrift.Protocol
+import           Thrift.Transport
+import           Thrift.Types
 
-import qualified Data.ByteString.Lazy as LBS
-import qualified Data.Text.Lazy as LT
+import qualified Data.ByteString.Lazy             as LBS
+import qualified Data.Text.Lazy                   as LT
 
 -- | The JSON Protocol data uses the standard 'TSimpleJSONProtocol'.  Data is
 -- encoded as a JSON 'ByteString'
@@ -86,6 +88,15 @@ instance Protocol JSONProtocol where
 
     readVal p ty = runParser p $ skipSpace *> parseJSONValue ty
 
+
+build :: (Text, MessageType, Int32) -> ThriftVal -> LBS.ByteString
+build (s, ty, sq) v = toLazyByteString $
+    B.char8 '[' <> buildShowable (1 :: Int32) <>
+    B.string8 ",\"" <> escape (encodeUtf8 s) <> B.char8 '\"' <>
+    B.char8 ',' <> buildShowable (fromEnum ty) <>
+    B.char8 ',' <> buildShowable sq <>
+    B.char8 ',' <>
+    buildJSONValue v <> "]"
 
 -- Writing Functions
 

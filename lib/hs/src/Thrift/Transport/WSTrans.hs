@@ -1,9 +1,9 @@
 module Thrift.Transport.WSTrans where
 
 import           Data.ByteString.Lazy          as BL hiding (pack)
-import           Data.IORef
 import           Data.Monoid
 import           Data.Text                     (pack)
+import           Data.IORef
 import           Prelude                       hiding (head, read)
 
 import qualified Network.WebSockets            as WS
